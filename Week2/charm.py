@@ -105,7 +105,6 @@ class CharmAlgorithm:
         return self.result
 
 
-
 if __name__ == '__main__':
     start = time.time()
 
@@ -128,5 +127,5 @@ if __name__ == '__main__':
 
     # Apply Charm Algorithm
     algorithm = CharmAlgorithm(minsup)
-    result = algorithm.charm_apply(freq)
-    print(result)
+    df1 = algorithm.charm_apply(freq)
+    print(df1)
