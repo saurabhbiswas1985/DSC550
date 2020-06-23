@@ -8,6 +8,7 @@
 
 import pandas as pd
 from itertools import combinations
+import numpy as np
 
 
 def read_file():
@@ -24,10 +25,10 @@ def read_file():
 
     ndi_dict = {}   # Empty dict
     df2 = pd.read_csv('ndi.txt', header=None)   # read file
-    df2 = df2.apply(lambda x: x.str.replace(' ',','))   # replace in between spaces with comma
+#    df2 = df2.apply(lambda x: x.str.replace(' ',','))   # replace in between spaces with comma
 
     for i, sets in enumerate(df2[0]):   # run loop to get the iterable object
-        ndi_dict[i] = sets  # add it into dict
+        ndi_dict[i] = sets.split(' ')  # add it into dict
 
     return sup_dict, ndi_dict
 
@@ -35,15 +36,10 @@ def read_file():
 def get_pwrset(ndi, ln):
     '''returns all combination of subsets from a given set'''
     pwr_set = []    # empty list for power set combination
-    print('ln=', ln)
-#    for sets in combinations(ndi, ln):  # run a loop to generate power set
-#        print(sets)
-#        pwr_set.append(sets)
-    print('dict=', ndi[0])
 
-    for i in range(1 << ln):
-        pwr_set.append([ndi[j] for j in range(ln) if (i & (1 << j))])
-    print(pwr_set)
+    for sets in combinations(ndi, ln):  # run a loop to generate power set
+        pwr_set.append(sets)
+
     return pwr_set
 
 
@@ -56,8 +52,11 @@ def get_boundary(subset, ndi1, sup_dict1):
         pwr_set1 = get_pwrset(ndi1, i)          # Get power set of set for a length
         for pwr_sub in pwr_set1:                  # Check all subsets in powers et
             itm = all(item in pwr_sub for item in subset)   # Get all items
+            temp_list=list(pwr_sub)     # tuple to list
+            s =','.join(temp_list)  # format it
+
             if itm or subset == ():
-                b = int(sup_dict1[pwr_sub]) * (-1) ** (len(ndi1)+1-i)   # boundary calculation formula
+                b = int(sup_dict1[s]) * (-1) ** (len(ndi1)+1-i)   # boundary calculation formula
                 boundary += b
 
     if subset == ():                            # in case subset is empty
@@ -77,18 +76,14 @@ def derivable_func(sup_dict, ndi_dict):
     for ndi in ndi_dict.values():   # loop on given ndi dictionary
         upper_bound = []
         lower_bound = []
-        for ln in range(1,len(ndi)+1):  # iterate over length of each ndi element
-            temp_list = []
-            temp_list.append(ndi)   # create a ndi list
-#            print(temp_list)
-            pwr_set = get_pwrset(temp_list, ln)                  # Get subsets of sets for each length
-#            print(pwr_set)
-            len_diff = len(temp_list) - len(pwr_set[0])          # Calculate the difference in length
+        for ln in range(0,len(ndi)):  # iterate over length of each ndi element
+            pwr_set = get_pwrset(ndi, ln)                  # Get subsets of sets for each length
+            len_diff = len(ndi) - len(pwr_set[0])          # Calculate the difference in length
             for subset in pwr_set:                           # Check each subset of powerset of set
                 if len_diff % 2 == 0:                      # Is difference Even ? Yes, lower bound
-                    lower_bound.append(get_boundary(subset, temp_list, sup_dict))   # calculate bound and append
+                    lower_bound.append(get_boundary(subset, ndi, sup_dict))   # calculate bound and append
                 else:                                      # Otherwise Odd, upper bound
-                    upper_bound.append(get_boundary(subset, temp_list, sup_dict))    # calculate bound and append
+                    upper_bound.append(get_boundary(subset, ndi, sup_dict))    # calculate bound and append
 
         # If maximum value of lower boundary and minimum value upper boundary then the
         # itemset is derivable from its subsets.
@@ -112,7 +107,7 @@ def derivable_func(sup_dict, ndi_dict):
         outcome_list.append((ndi,':', [lower_bound, upper_bound], item_superset))
 
     df3 = pd.DataFrame(outcome_list)     # Change it to dataframe
-    df3.to_csv('ndi_result.txt')    # write output
+    df3.to_csv('ndi_result.txt', header=False, index=False)    # write output
 
     return
 
