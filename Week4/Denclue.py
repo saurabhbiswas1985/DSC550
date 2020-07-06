@@ -271,7 +271,43 @@ if __name__ == '__main__':
     data = np.array(df1)        # convert it into numpy array
     iris = np.mat(data[:, 0:4])     # create a matrix for first 4 columns
 
-    denclu = DENCLUE(h=0.37, eps=eps, min_density=min_dnesity, metric='euclidean')
-    clusters = denclu.fit(iris, y=None, sample_weight=None)
+    denclue = DENCLUE(h=0.37, eps=eps, min_density=min_dnesity, metric='euclidean')
+    clusters = denclue.fit(iris, y=None, sample_weight=None)
 
-    print(clusters)
+    # print(clusters)
+    # load into dataframe, dictionary keys should be loaded into dataframe row.
+    df2 = pd.DataFrame.from_dict(clusters, orient='index')
+    row, col = df2.shape
+    # print(df2.columns)
+    df3 = df2['size']
+    print('Number of cluster is:', row)
+    print('Size of each cluster:\n', df3)
+
+    df3 = df2[['density', 'instances']]
+    print('Density attractor and point assignment of each cluster are:\n', df3, '\n')
+
+    df3 = df2['instances']  # get only data points
+    array = df3.to_numpy()  # convert it into numpy
+
+    dict_dummy = {}
+    i = 0
+    for x in array:     # run a loop to extract points and its cluster assignment into a dictionary
+        for j in x:
+            dict_dummy[j] = i
+        i += 1
+    dict_dummy = dict(sorted(dict_dummy.items()))    # sort on keys
+    df3 = pd.DataFrame.from_dict(dict_dummy, orient='index')
+
+    # concatenate cluster with original datarame
+    df3 = pd.concat([df1, df3], axis=1, ignore_index=True)
+    df3.columns = ['attr1', 'attr2', 'attr3', 'attr4', 'type', 'cluster']  # assign column name
+    df3 = df3.assign(New=1)  # add a new column with constant value
+    df3 = df3.groupby(['type', 'cluster'], as_index=False)['New'].sum()
+
+    # get max count from confusion matrix
+    cnt_1 = df3[df3.type == 'Iris-setosa'].New.max()
+    cnt_2 = df3[df3.type == 'Iris-versicolor'].New.max()
+    cnt_3 = df3[df3.type == 'Iris-virginica'].New.max()
+    purity = (cnt_1 + cnt_2 + cnt_3) / df3.New.sum()
+    print('\n The purity value is:{:.2f}'.format(purity))
+
