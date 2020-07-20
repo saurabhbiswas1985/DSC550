@@ -211,6 +211,7 @@ def plot_graph(df1, model_filename):
     plot_decision_regions(X, Y, classifier=loaded_model)
     plt.legend(loc='upper left')
     plt.tight_layout()
+    plt.title('RBF kernel SVM Classifier')
     plt.show()
 
 
